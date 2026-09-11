@@ -42,7 +42,7 @@ if "Valor_Liquido" not in df.columns:
     cred = df["Credito"] if "Credito" in df.columns else 0
     df["Valor_Liquido"] = deb - cred
 
-st.title("📊 Cockpit Geral de Despesas Operacionais")
+st.title("📊 Dashboard Geral de Despesas Operacionais")
 st.caption("Visão Consolidada de Custos e Despesas do Pós-Vendas Mardisa Agro")
 
 # Barra de Filtros

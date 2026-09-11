@@ -4,7 +4,7 @@ import plotly.express as px
 from data.repository import obter_dados_ativos
 
 st.set_page_config(
-    page_title="Cockpit Geral | Pós-Vendas Mardisa",
+    page_title="Dashboard Geral | Pós-Vendas Mardisa",
     page_icon="📊",
     layout="wide"
 )

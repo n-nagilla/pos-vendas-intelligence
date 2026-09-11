@@ -92,8 +92,8 @@ st.markdown("<br>", unsafe_allow_html=True)
 # -------------------------------------------------------------
 # SEÇÃO 2: RAIO-X DE CONTA INDIVIDUAL & MÉDIA MÓVEL (3M)
 # -------------------------------------------------------------
-st.subheader("🔬 Raio-X Individual de Conta (Suavização & Média Móvel)")
-st.caption("Selecione uma conta específica para auditar seu comportamento contra a média móvel de 3 meses.")
+st.subheader("🔬 Raio-X Individual de Conta")
+st.caption("Selecione uma conta específica para auditar seu comportamento contra a média trimestral.")
 
 col_rx1, col_rx2 = st.columns([1, 2])
 

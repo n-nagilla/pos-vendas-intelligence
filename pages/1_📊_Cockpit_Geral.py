@@ -2,13 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 from data.repository import obter_dados_ativos
-from utils.formatting import format_currency_brl
 
 st.set_page_config(
     page_title="Cockpit Geral | Pós-Vendas Mardisa",
     page_icon="📊",
     layout="wide"
 )
+
+# Função local para formatação no padrão brasileiro R$ 1.234,56
+def formatar_moeda_brl(val):
+    if pd.isna(val):
+        return "R$ 0,00"
+    return f"R$ {val:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 # -------------------------------------------------------------
 # 1. CARREGAMENTO E FILTROS GLOBAIS
@@ -78,10 +83,10 @@ pct_dv = (dv_total / total_despesas * 100) if total_despesas > 0 else 0
 
 kpi1, kpi2, kpi3, kpi4 = st.columns(4)
 
-kpi1.metric("💰 Total de Despesas", format_currency_brl(total_despesas))
-kpi2.metric("👥 Despesas com Pessoal", format_currency_brl(dp_total), f"{pct_dp:.1f}% do total")
-kpi3.metric("🏛️ Administrativo", format_currency_brl(da_total), f"{pct_da:.1f}% do total")
-kpi4.metric("🚛 Vendas & Campo", format_currency_brl(dv_total), f"{pct_dv:.1f}% do total")
+kpi1.metric("💰 Total de Despesas", formatar_moeda_brl(total_despesas))
+kpi2.metric("👥 Despesas com Pessoal", formatar_moeda_brl(dp_total), f"{pct_dp:.1f}% do total")
+kpi3.metric("🏛️ Administrativo", formatar_moeda_brl(da_total), f"{pct_da:.1f}% do total")
+kpi4.metric("🚛 Vendas & Campo", formatar_moeda_brl(dv_total), f"{pct_dv:.1f}% do total")
 
 st.divider()
 
@@ -141,7 +146,7 @@ top_contas = (
 )
 
 top_contas["Participação (%)"] = (top_contas["Valor_Liquido"] / total_despesas * 100).map("{:.2f}%".format)
-top_contas["Total Acumulado (R$)"] = top_contas["Valor_Liquido"].apply(format_currency_brl)
+top_contas["Total Acumulado (R$)"] = top_contas["Valor_Liquido"].apply(formatar_moeda_brl)
 
 st.dataframe(
     top_contas[["Dre", "Conta", "Total Acumulado (R$)", "Participação (%)"]].rename(

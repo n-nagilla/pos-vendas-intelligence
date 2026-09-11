@@ -4,12 +4,12 @@ import plotly.graph_objects as go
 from data.repository import obter_dados_ativos
 
 st.set_page_config(
-    page_title="Simulador de Cenários What-If | Mardisa Agro",
+    page_title="Simulador de Cenários | Mardisa Agro",
     page_icon="🎯",
     layout="wide"
 )
 
-st.title("🎯 Simulador de Decisão & Sensibilidade Financeira")
+st.title("🎯 Simulador de Decisão e Sensibilidade Financeira")
 st.caption("Projete o impacto financeiro de metas de redução de despesas sobre o orçamento do Pós-Vendas.")
 
 # 1. Carregamento dos dados

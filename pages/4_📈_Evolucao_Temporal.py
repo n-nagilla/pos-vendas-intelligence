@@ -58,7 +58,7 @@ st.markdown("---")
 # -------------------------------------------------------------
 # SEÇÃO 1: CURVA TEMPORAL MULTI-CONTAS COM LINHA DE TENDÊNCIA
 # -------------------------------------------------------------
-st.subheader("📊 Comparativo de Trajetória Mensal")
+st.subheader("📊 Comparativo Mensal")
 
 if contas_sel:
     df_curva = df_base[df_base["Conta"].isin(contas_sel)]
@@ -74,7 +74,7 @@ if contas_sel:
         y="Valor_Liquido",
         color="Conta",
         markers=True,
-        title="Evolução Mensal das Contas Selecionadas (Identificação de Picos e Inflexões)",
+        title="Evolução Mensal das Contas Selecionadas",
         template="plotly_white",
         labels={"Valor_Liquido": "Despesa (R$)", "Mes_Ano": "Mês"}
     )
@@ -146,7 +146,7 @@ st.markdown("---")
 # -------------------------------------------------------------
 # SEÇÃO 3: TABELA DE EVOLUÇÃO PERCENTUAL MÊS A MÊS (MoM)
 # -------------------------------------------------------------
-with st.expander("📋 Ver Tabela de Variação MoM (%) de Todas as Contas", expanded=False):
+with st.expander("📋 Ver Tabela de Variação de Todas as Contas", expanded=False):
     tabela_mom = df_base.pivot_table(
         index="Conta",
         columns="Mes_Ano",

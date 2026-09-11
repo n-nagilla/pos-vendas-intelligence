@@ -1,4 +1,7 @@
 import streamlit as st
+if not st.session_state.get("usuario_autenticado", False):
+    st.warning("🔒 Acesso restrito! Por favor, realize o login na tela inicial.")
+    st.stop()
 import hmac
 import plotly.express as px
 import pandas as pd

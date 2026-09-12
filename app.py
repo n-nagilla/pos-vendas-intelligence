@@ -3,95 +3,97 @@ import hmac
 import pandas as pd
 import plotly.express as px
 
+# 1. Configuração de página OBRIGATORIAMENTE no topo
 st.set_page_config(
     page_title="Pós-Vendas Intelligence | Mardisa Agro",
     page_icon="🚜",
     layout="wide"
 )
 
-# ----------------------------------------------------------------------
-# 1. TRAVA ABSOLUTA DE SEGURANÇA (LOGIN FORÇADO)
-# ----------------------------------------------------------------------
+# 2. Estado de autenticação inicial
 if "autenticado" not in st.session_state:
     st.session_state["autenticado"] = False
 
+# ----------------------------------------------------------------------
+# 3. TELA DE LOGIN (EXECUTA ENQUANTO NÃO AUTENTICADO)
+# ----------------------------------------------------------------------
 if not st.session_state["autenticado"]:
-    # Oculta menu lateral e qualquer outra página completamente
+    # Oculta completamente barra lateral e navegação nativa
     st.markdown(
         """
         <style>
-            [data-testid="stSidebarNav"], [data-testid="stSidebar"] { display: none !important; }
+            [data-testid="stSidebarNav"] { display: none !important; }
+            [data-testid="stSidebar"] { display: none !important; }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    col1, col_login, col2 = st.columns([1, 1.2, 1])
+    _, col_login, _ = st.columns([1, 1.2, 1])
     with col_login:
         st.markdown("<br><br><br>", unsafe_allow_html=True)
         st.markdown("## 🔒 Acesso Restrito")
         st.caption("Pós-Vendas Intelligence | Mardisa Agro")
 
-        with st.form("login_form"):
-            user = st.text_input("Usuário").strip().lower()
-            password = st.text_input("Senha", type="password").strip()
-            entrar = st.form_submit_button("Entrar no Sistema", use_container_width=True)
+        with st.form("form_seguranca"):
+            input_usuario = st.text_input("Usuário").strip().lower()
+            input_senha = st.text_input("Senha", type="password").strip()
+            botao_entrar = st.form_submit_button("Entrar no Sistema", use_container_width=True)
 
-            if entrar:
-                # Dicionário de emergência direto no código (ou pelos secrets se preferir)
-                # Aceita tanto os cadastrados nos secrets quanto esta lista de segurança:
+            if botao_entrar:
+                # Dicionário de credenciais válidas
                 usuarios_validos = {
                     "admin": "Mardisa@2026",
                     "nagilla": "Agro#Nagilla2026",
                     "diretoria": "Parvi@PosVendas2026",
                     "coordenacao": "Garantia#2026"
                 }
-                
-                # Se tiver secrets configurados, adiciona também
+
+                # Incorpora secrets caso configurados
                 if hasattr(st, "secrets") and "users" in st.secrets:
                     usuarios_validos.update(dict(st.secrets["users"]))
 
-                if user in usuarios_validos and hmac.compare_digest(password, str(usuarios_validos[user])):
+                if input_usuario in usuarios_validos and hmac.compare_digest(
+                    input_senha, str(usuarios_validos[input_usuario])
+                ):
                     st.session_state["autenticado"] = True
-                    st.session_state["usuario_conectado"] = user.capitalize()
-                    st.success("✅ Acesso liberado!")
+                    st.session_state["usuario_conectado"] = input_usuario.capitalize()
+                    st.success("✅ Acesso autorizado!")
                     st.rerun()
                 else:
                     st.error("❌ Usuário ou senha incorretos.")
 
-    # INTERROMPE TUDO AQUI. NADA ABAIXO EXECUTA SE NÃO ESTIVER AUTENTICADO.
+    # Interrompe o script para não carregar nada além do login
     st.stop()
 
 # ----------------------------------------------------------------------
-# 2. SEÇÃO AUTENTICADA (SÓ EXECUTA APÓS O LOGIN BEM-SUCEDIDO)
+# 4. CONTEÚDO PRINCIPAL (SÓ CARREGA APÓS LOGIN)
 # ----------------------------------------------------------------------
+from data.repository import obter_dados_ativos
+from analytics.indicators import MetricasFinanceiras
+from components.navbar import renderizar_filtros_superiores
 
-# Botão de Logout no menu lateral
 with st.sidebar:
-    st.markdown(f"👤 Conectado: **{st.session_state.get('usuario_conectado', 'Usuário')}**")
+    st.markdown(f"👤 Conectado: **{st.session_state.get('usuario_conectado', 'Operador')}**")
     if st.button("🚪 Encerrar Sessão", use_container_width=True):
         st.session_state["autenticado"] = False
         st.session_state["usuario_conectado"] = None
         st.rerun()
 
-from data.repository import obter_dados_ativos
-from analytics.indicators import MetricasFinanceiras
-from components.navbar import renderizar_filtros_superiores
-
 st.title("🚜 Central de Inteligência do Pós-Vendas")
 st.caption("Visão Executiva Consolidada de Custos e Despesas Operacionais")
 
-# 1. Carregamento dos dados
+# Carregamento dos dados
 df_completo = obter_dados_ativos()
 
 if df_completo.empty:
     st.error("Planilha padrão não encontrada em `data/raw/` ou sem dados válidos.")
     st.stop()
 
-# 2. Barra de Filtros Globais
+# Barra de Filtros Globais
 df_filtrado = renderizar_filtros_superiores(df_completo)
 
-# 3. Métricas Executivas
+# Métricas Executivas
 kpis = MetricasFinanceiras.calcular_kpis_gerais(df_filtrado)
 
 def fmt_brl(v):
@@ -119,7 +121,7 @@ c4.metric(
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 4. Gráficos de Tomada de Decisão
+# Abas Analíticas
 tab_visao, tab_ofensores, tab_matriz = st.tabs([
     "📈 Evolução & Tendência",
     "🚨 Ranking de Ofensores (Top 10)",

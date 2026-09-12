@@ -1,7 +1,4 @@
 import streamlit as st
-if not st.session_state.get("usuario_autenticado", False):
-    st.warning("🔒 Acesso restrito! Por favor, realize o login na tela inicial.")
-    st.stop()
 import hmac
 import plotly.express as px
 import pandas as pd
@@ -19,7 +16,7 @@ st.set_page_config(
 # PORTAL DE AUTENTICAÇÃO SEGURO (USUÁRIO + SENHA)
 # -------------------------------------------------------------
 def sistema_login():
-    # 1. Verifica se já está logado
+    # 1. Se já autenticou antes, libera o app e exibe o usuário logado
     if st.session_state.get("usuario_autenticado", False):
         with st.sidebar:
             st.markdown(f"👤 Usuário conectado:")
@@ -30,7 +27,7 @@ def sistema_login():
                 st.rerun()
         return True
 
-    # 2. Se NÃO está logado, esconde menu lateral e abas
+    # 2. Se NÃO está logado, oculta todo o menu lateral para ninguém burlar
     st.markdown(
         """
         <style>
@@ -41,7 +38,7 @@ def sistema_login():
         unsafe_allow_html=True
     )
 
-    # 3. Card visual de Login
+    # 3. Desenha a caixinha central de login
     col_esq, col_card, col_dir = st.columns([1, 1.2, 1])
 
     with col_card:
@@ -55,7 +52,6 @@ def sistema_login():
             btn_entrar = st.form_submit_button("Acessar Painel", use_container_width=True)
 
             if btn_entrar:
-                # Busca a lista de usuários cadastrada nos Secrets
                 usuarios_validos = st.secrets.get("users", {})
 
                 if not input_user or not input_pass:
@@ -68,10 +64,10 @@ def sistema_login():
                 else:
                     st.error("❌ Usuário ou senha incorretos.")
 
-    # Interrompe o carregamento do restante do app até que o login seja validado
+    # Interrompe o carregamento dos gráficos até a senha ser confirmada
     st.stop()
 
-# Executa a trava
+# Executa o login
 sistema_login()
 
 # =============================================================

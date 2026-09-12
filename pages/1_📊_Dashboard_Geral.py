@@ -8,7 +8,10 @@ st.set_page_config(
     page_icon="📊",
     layout="wide"
 )
-
+if not st.session_state.get("usuario_autenticado", False):
+    st.warning("🔒 Acesso restrito! Por favor, realize o login na tela inicial.")
+    st.stop()
+    
 def formatar_moeda_brl(val):
     if pd.isna(val):
         return "R$ 0,00"

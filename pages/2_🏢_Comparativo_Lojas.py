@@ -10,6 +10,10 @@ st.set_page_config(
     layout="wide"
 )
 
+if not st.session_state.get("usuario_autenticado", False):
+    st.warning("🔒 Acesso restrito! Por favor, realize o login na tela inicial.")
+    st.stop()
+
 st.title("🏢 Benchmarking & Comparativo entre Lojas")
 st.caption("Análise de eficiência de custos entre Fendt Balsas, Valtra Balsas, Imperatriz e Alto Alegre")
 

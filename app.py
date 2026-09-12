@@ -1,10 +1,7 @@
 import streamlit as st
 import hmac
-import plotly.express as px
 import pandas as pd
-from data.repository import obter_dados_ativos
-from analytics.indicators import MetricasFinanceiras
-from components.navbar import renderizar_filtros_superiores
+import plotly.express as px
 
 st.set_page_config(
     page_title="Pós-Vendas Intelligence | Mardisa Agro",
@@ -12,82 +9,89 @@ st.set_page_config(
     layout="wide"
 )
 
-# -------------------------------------------------------------
-# PORTAL DE AUTENTICAÇÃO SEGURO (USUÁRIO + SENHA)
-# -------------------------------------------------------------
-def sistema_login():
-    # 1. Se já autenticou antes, libera o app e exibe o usuário logado
-    if st.session_state.get("usuario_autenticado", False):
-        with st.sidebar:
-            st.markdown(f"👤 Usuário conectado:")
-            st.info(f"**{st.session_state.get('nome_usuario', 'Operador')}**")
-            if st.button("🚪 Encerrar Sessão", use_container_width=True):
-                st.session_state["usuario_autenticado"] = False
-                st.session_state["nome_usuario"] = None
-                st.rerun()
-        return True
+# ----------------------------------------------------------------------
+# 1. TRAVA ABSOLUTA DE SEGURANÇA (LOGIN FORÇADO)
+# ----------------------------------------------------------------------
+if "autenticado" not in st.session_state:
+    st.session_state["autenticado"] = False
 
-    # 2. Se NÃO está logado, oculta todo o menu lateral para ninguém burlar
+if not st.session_state["autenticado"]:
+    # Oculta menu lateral e qualquer outra página completamente
     st.markdown(
         """
         <style>
-            [data-testid="stSidebarNav"] {display: none !important;}
-            [data-testid="stSidebar"] {display: none !important;}
+            [data-testid="stSidebarNav"], [data-testid="stSidebar"] { display: none !important; }
         </style>
         """,
         unsafe_allow_html=True
     )
 
-    # 3. Desenha a caixinha central de login
-    col_esq, col_card, col_dir = st.columns([1, 1.2, 1])
-
-    with col_card:
-        st.markdown("<br><br>", unsafe_allow_html=True)
+    col1, col_login, col2 = st.columns([1, 1.2, 1])
+    with col_login:
+        st.markdown("<br><br><br>", unsafe_allow_html=True)
         st.markdown("## 🔒 Acesso Restrito")
-        st.caption("Central de Inteligência do Pós-Vendas | Mardisa Agro")
+        st.caption("Pós-Vendas Intelligence | Mardisa Agro")
 
-        with st.form("form_autenticacao"):
-            input_user = st.text_input("Nome de Usuário", placeholder="Ex: nagilla ou diretoria").strip().lower()
-            input_pass = st.text_input("Senha", type="password", placeholder="Digite sua senha")
-            btn_entrar = st.form_submit_button("Acessar Painel", use_container_width=True)
+        with st.form("login_form"):
+            user = st.text_input("Usuário").strip().lower()
+            password = st.text_input("Senha", type="password").strip()
+            entrar = st.form_submit_button("Entrar no Sistema", use_container_width=True)
 
-            if btn_entrar:
-                usuarios_validos = st.secrets.get("users", {})
+            if entrar:
+                # Dicionário de emergência direto no código (ou pelos secrets se preferir)
+                # Aceita tanto os cadastrados nos secrets quanto esta lista de segurança:
+                usuarios_validos = {
+                    "admin": "Mardisa@2026",
+                    "nagilla": "Agro#Nagilla2026",
+                    "diretoria": "Parvi@PosVendas2026",
+                    "coordenacao": "Garantia#2026"
+                }
+                
+                # Se tiver secrets configurados, adiciona também
+                if hasattr(st, "secrets") and "users" in st.secrets:
+                    usuarios_validos.update(dict(st.secrets["users"]))
 
-                if not input_user or not input_pass:
-                    st.warning("⚠️ Preencha usuário e senha.")
-                elif input_user in usuarios_validos and hmac.compare_digest(input_pass, str(usuarios_validos[input_user])):
-                    st.session_state["usuario_autenticado"] = True
-                    st.session_state["nome_usuario"] = input_user.capitalize()
-                    st.success(f"✅ Bem-vindo(a), {input_user.capitalize()}! Acessando...")
+                if user in usuarios_validos and hmac.compare_digest(password, str(usuarios_validos[user])):
+                    st.session_state["autenticado"] = True
+                    st.session_state["usuario_conectado"] = user.capitalize()
+                    st.success("✅ Acesso liberado!")
                     st.rerun()
                 else:
                     st.error("❌ Usuário ou senha incorretos.")
 
-    # Interrompe o carregamento dos gráficos até a senha ser confirmada
+    # INTERROMPE TUDO AQUI. NADA ABAIXO EXECUTA SE NÃO ESTIVER AUTENTICADO.
     st.stop()
 
-# Executa o login
-sistema_login()
+# ----------------------------------------------------------------------
+# 2. SEÇÃO AUTENTICADA (SÓ EXECUTA APÓS O LOGIN BEM-SUCEDIDO)
+# ----------------------------------------------------------------------
 
-# =============================================================
-# CONTEÚDO PRINCIPAL (SÓ APARECE APÓS LOGIN VÁLIDO)
-# =============================================================
+# Botão de Logout no menu lateral
+with st.sidebar:
+    st.markdown(f"👤 Conectado: **{st.session_state.get('usuario_conectado', 'Usuário')}**")
+    if st.button("🚪 Encerrar Sessão", use_container_width=True):
+        st.session_state["autenticado"] = False
+        st.session_state["usuario_conectado"] = None
+        st.rerun()
+
+from data.repository import obter_dados_ativos
+from analytics.indicators import MetricasFinanceiras
+from components.navbar import renderizar_filtros_superiores
 
 st.title("🚜 Central de Inteligência do Pós-Vendas")
 st.caption("Visão Executiva Consolidada de Custos e Despesas Operacionais")
 
-# Carregamento dos dados
+# 1. Carregamento dos dados
 df_completo = obter_dados_ativos()
 
 if df_completo.empty:
     st.error("Planilha padrão não encontrada em `data/raw/` ou sem dados válidos.")
     st.stop()
 
-# Barra de Filtros Globais
+# 2. Barra de Filtros Globais
 df_filtrado = renderizar_filtros_superiores(df_completo)
 
-# Métricas Executivas
+# 3. Métricas Executivas
 kpis = MetricasFinanceiras.calcular_kpis_gerais(df_filtrado)
 
 def fmt_brl(v):
@@ -115,7 +119,7 @@ c4.metric(
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Abas Analíticas
+# 4. Gráficos de Tomada de Decisão
 tab_visao, tab_ofensores, tab_matriz = st.tabs([
     "📈 Evolução & Tendência",
     "🚨 Ranking de Ofensores (Top 10)",

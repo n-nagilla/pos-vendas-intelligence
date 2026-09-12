@@ -1,17 +1,20 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-from data.repository import obter_dados_ativos
 
 st.set_page_config(
     page_title="Dashboard Geral | Pós-Vendas Mardisa",
     page_icon="📊",
     layout="wide"
 )
-if not st.session_state.get("usuario_autenticado", False):
+
+# Trava de segurança compatível com o app.py
+if not st.session_state.get("autenticado", False):
     st.warning("🔒 Acesso restrito! Por favor, realize o login na tela inicial.")
     st.stop()
-    
+
+from data.repository import obter_dados_ativos
+
 def formatar_moeda_brl(val):
     if pd.isna(val):
         return "R$ 0,00"

@@ -18,24 +18,8 @@ v09_acoes_coordenadora = importlib.import_module("views.09_acoes_coordenadora")
 v10_carteira_consultora = importlib.import_module("views.10_carteira_consultora")
 v11_regra_ouro = importlib.import_module("views.11_regra_ouro")
 
-# Importações do banco e gestão
+# Importações dos módulos de Garantia Control e banco
 from data.db_manager import carregar_dados_gestao, sincronizar_excel_com_db, atualizar_os_completa
-
-# Importações dos módulos de Garantia Control
-from data.db_manager import carregar_dados_gestao, sincronizar_excel_com_db, atualizar_os_completa
-from views import (
-    v01_painel_coordenadora,
-    v02_carteira_os,
-    v03_processos_prazos,
-    v04_controle_pecas,
-    v05_controle_fabrica,
-    v06_devolucao_pecas,
-    v07_campanhas_campo,
-    v08_entrega_tecnica,
-    v09_acoes_coordenadora,
-    v10_carteira_consultora,
-    v11_regra_ouro
-)
 
 st.set_page_config(
     page_title="Pós-Vendas Intelligence | Mardisa Agro",

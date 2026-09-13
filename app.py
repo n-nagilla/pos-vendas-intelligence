@@ -3,6 +3,20 @@ import hmac
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
+import importlib
+
+# Carrega os módulos da pasta views de forma segura (ignorando restrição de nomes com números)
+v01_painel_coordenadora = importlib.import_module("views.01_painel_coordenadora")
+v02_carteira_os = importlib.import_module("views.02_carteira_os")
+v03_processos_prazos = importlib.import_module("views.03_processos_prazos")
+v04_controle_pecas = importlib.import_module("views.04_controle_pecas")
+v05_controle_fabrica = importlib.import_module("views.05_controle_fabrica")
+v06_devolucao_pecas = importlib.import_module("views.06_devolucao_pecas")
+v07_campanhas_campo = importlib.import_module("views.07_campanhas_campo")
+v08_entrega_tecnica = importlib.import_module("views.08_entrega_tecnica")
+v09_acoes_coordenadora = importlib.import_module("views.09_acoes_coordenadora")
+v10_carteira_consultora = importlib.import_module("views.10_carteira_consultora")
+v11_regra_ouro = importlib.import_module("views.11_regra_ouro")
 
 # Importações dos módulos de Garantia Control
 from data.db_manager import carregar_dados_gestao, sincronizar_excel_com_db, atualizar_os_completa

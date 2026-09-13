@@ -2,6 +2,23 @@ import streamlit as st
 import hmac
 import pandas as pd
 import plotly.express as px
+from datetime import datetime
+
+# Importações dos módulos de Garantia Control
+from data.db_manager import carregar_dados_gestao, sincronizar_excel_com_db, atualizar_os_completa
+from views import (
+    v01_painel_coordenadora,
+    v02_carteira_os,
+    v03_processos_prazos,
+    v04_controle_pecas,
+    v05_controle_fabrica,
+    v06_devolucao_pecas,
+    v07_campanhas_campo,
+    v08_entrega_tecnica,
+    v09_acoes_coordenadora,
+    v10_carteira_consultora,
+    v11_regra_ouro
+)
 
 st.set_page_config(
     page_title="Pós-Vendas Intelligence | Mardisa Agro",
@@ -70,26 +87,90 @@ with st.sidebar:
         st.session_state["usuario_nome"] = None
         st.rerun()
 
+def calcular_criticidade_e_prazos(df):
+    if df.empty:
+        return df
+    
+    hoje = datetime.now()
+    dias_os = []
+    semaforo_os = []
+    
+    for _, row in df.iterrows():
+        dt_emissao = pd.to_datetime(row.get("Emissao"), format="%d/%m/%Y", errors="coerce")
+        dias = 0 if pd.isna(dt_emissao) else (hoje - dt_emissao).days
+        dias_os.append(dias)
+        
+        if dias <= 30:
+            semaforo_os.append("🟢 Dentro do Prazo")
+        elif dias <= 50:
+            semaforo_os.append("🟡 Atenção")
+        else:
+            semaforo_os.append("🔴 Crítico (>60d)")
+            
+    df["Dias_Aberto_OS"] = dias_os
+    df["Semáforo_Prazo"] = semaforo_os
+    return df
+
 # =========================================================================
-# FLUXO EXCLUSIVO PARA A USUÁRIA: NAGILLA (Garantia Control)
+# FLUXO EXCLUSIVO PARA A USUÁRIA: NAGILLA (Garantia Control - 11 Abas)
 # =========================================================================
 if usuario_atual == "nagilla":
-    from data.db_manager import sincronizar_excel_com_db
+    st.markdown("""
+        <style>
+            [data-testid="stSidebarNav"] { display: none !important; }
+        </style>
+    """, unsafe_allow_html=True)
 
-    try:
-        sincronizar_excel_com_db()
-    except Exception:
-        pass
+    st.title("🚜 Garantia Control | Mardisa Agro")
+    st.caption("Central de Inteligência e Gestão de Garantias — Fendt & Valtra (Grupo Parvi)")
 
-    try:
-        from views.garantia_app import carregar_garantia_control
-        carregar_garantia_control()
-    except ImportError:
-        st.title("🚜 Garantia Control — Mardisa Agro")
-        st.info("Módulo de Garantias carregado para a usuária Nagilla. Criando arquivo de visualização em breve.")
-        # Se desejar acoplar aqui a chamada da sua view de garantias:
-        from views.gestao_garantias import render_dashboard_garantias
-        render_dashboard_garantias()
+    col_sync, _ = st.columns([1, 4])
+    with col_sync:
+        if st.button("🔄 Sincronizar Base", use_container_width=True):
+            sincronizar_excel_com_db()
+            st.toast("Base sincronizada com sucesso!")
+            st.rerun()
+
+    df = carregar_dados_gestao()
+    if not df.empty:
+        df = calcular_criticidade_e_prazos(df)
+
+    abas = st.tabs([
+        "🚦 1. Painel da Coordenadora",
+        "📋 2. Carteira de O.S.",
+        "⏱️ 3. Processos & Prazos",
+        "📦 4. Controle de Peças",
+        "💰 5. Controle Fábrica",
+        "📦 6. Devolução de Peças",
+        "🚜 7. Campanhas de Campo",
+        "📑 8. Entrega Técnica",
+        "🔴 9. Ações da Coordenadora",
+        "👥 10. Carteira da Consultora",
+        "⚠️ 11. Regra de Ouro"
+    ])
+
+    with abas[0]:
+        v01_painel_coordenadora.render(df)
+    with abas[1]:
+        v02_carteira_os.render(df)
+    with abas[2]:
+        v03_processos_prazos.render(df)
+    with abas[3]:
+        v04_controle_pecas.render(df)
+    with abas[4]:
+        v05_controle_fabrica.render(df)
+    with abas[5]:
+        v06_devolucao_pecas.render(df)
+    with abas[6]:
+        v07_campanhas_campo.render(df)
+    with abas[7]:
+        v08_entrega_tecnica.render(df)
+    with abas[8]:
+        v09_acoes_coordenadora.render(df)
+    with abas[9]:
+        v10_carteira_consultora.render(df)
+    with abas[10]:
+        v11_regra_ouro.render(df)
 
 # =========================================================================
 # FLUXO ORIGINAL PARA DEMAIS USUÁRIOS (Diretoria, Admin, Coordenação)

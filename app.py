@@ -3,11 +3,6 @@ import hmac
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
-import streamlit as st
-import hmac
-import pandas as pd
-import plotly.express as px
-from datetime import datetime
 import importlib
 
 # Carrega os módulos da pasta views de forma segura

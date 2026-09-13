@@ -5,7 +5,7 @@ import plotly.express as px
 from datetime import datetime
 import importlib
 
-# Carrega os módulos da pasta views de forma segura
+# Carrega os módulos da pasta views de forma segura (ignorando restrição de nomes com números)
 v01_painel_coordenadora = importlib.import_module("views.01_painel_coordenadora")
 v02_carteira_os = importlib.import_module("views.02_carteira_os")
 v03_processos_prazos = importlib.import_module("views.03_processos_prazos")
@@ -17,6 +17,9 @@ v08_entrega_tecnica = importlib.import_module("views.08_entrega_tecnica")
 v09_acoes_coordenadora = importlib.import_module("views.09_acoes_coordenadora")
 v10_carteira_consultora = importlib.import_module("views.10_carteira_consultora")
 v11_regra_ouro = importlib.import_module("views.11_regra_ouro")
+
+# Importações do banco e gestão
+from data.db_manager import carregar_dados_gestao, sincronizar_excel_com_db, atualizar_os_completa
 
 # Importações dos módulos de Garantia Control
 from data.db_manager import carregar_dados_gestao, sincronizar_excel_com_db, atualizar_os_completa

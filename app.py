@@ -3,9 +3,14 @@ import hmac
 import pandas as pd
 import plotly.express as px
 from datetime import datetime
+import streamlit as st
+import hmac
+import pandas as pd
+import plotly.express as px
+from datetime import datetime
 import importlib
 
-# Carrega os módulos da pasta views de forma segura (ignorando restrição de nomes com números)
+# Carrega os módulos da pasta views de forma segura
 v01_painel_coordenadora = importlib.import_module("views.01_painel_coordenadora")
 v02_carteira_os = importlib.import_module("views.02_carteira_os")
 v03_processos_prazos = importlib.import_module("views.03_processos_prazos")

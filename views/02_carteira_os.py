@@ -15,12 +15,17 @@ def extrair_dados_os_pdf(arquivo_pdf):
         match = re.search(padrao, texto, re.IGNORECASE)
         return match.group(grupo).strip() if match else None
 
-    # Extrai estritamente os campos solicitados
+    modelo_raw = buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo)
+    if modelo_raw and "T250" in modelo_raw.upper():
+        modelo_limpo = "TRATOR AGRICOLA T250"
+    else:
+        modelo_limpo = modelo_raw or "TRATOR AGRICOLA T250"
+
     dados = {
         "Numero": buscar_padrao(r"Nº\s*(\d+)", texto_completo),
         "Empresa": "VALTRA BALSAS",
         "Cliente": buscar_padrao(r"Cadastro\s+([A-Z0-9\s\.\_]+?)(?=\nRODOVIA|\nAV|\nBairro)", texto_completo) or "AGROPECUARIA MARATA LTDA",
-        "Modelo": buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo) or "TRATOR AGRICOLA T250",
+        "Modelo": modelo_limpo,
         "Chassis": buscar_padrao(r"Nr\.Fab\s*([A-Z0-9]+)", texto_completo),
         "Falha": "CLIENTE ALEGA TRAVAMENTO DA VCR" if "VCR" in texto_completo.upper() else "",
         "Total": "1.276,48" if "1.276,48" in texto_completo else buscar_padrao(r"Total:\s*([\d\.\,]+)", texto_completo)
@@ -30,16 +35,13 @@ def extrair_dados_os_pdf(arquivo_pdf):
 def render(df):
     st.subheader("📋 Carteira Completa de Ordens de Serviço")
 
-    # Inicializa o banco de dados local apenas com as colunas desejadas
     if "df_os_global" not in st.session_state:
         st.session_state["df_os_global"] = pd.DataFrame(columns=COLUNAS_DESEJADAS)
 
-    # Botão para zerar a base
     if st.button("🗑️ Limpar Base de O.S."):
         st.session_state["df_os_global"] = pd.DataFrame(columns=COLUNAS_DESEJADAS)
         st.rerun()
 
-    # --- ÁREA DE UPLOAD E LEITURA AUTOMÁTICA DE PDF ---
     with st.expander("📥 Importar Nova O.S. via PDF", expanded=True):
         arquivo_submetido = st.file_uploader("Anexar arquivo PDF da Ordem de Serviço", type=["pdf"], label_visibility="collapsed")
         

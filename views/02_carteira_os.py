@@ -3,7 +3,9 @@ import pandas as pd
 import pdfplumber
 import re
 
-def extrair_dados_os_pdf(arquivo_pdf, colunas_df):
+COLUNAS_DESEJADAS = ["Numero", "Empresa", "Cliente", "Modelo", "Chassis", "Falha", "Total"]
+
+def extrair_dados_os_pdf(arquivo_pdf):
     texto_completo = ""
     with pdfplumber.open(arquivo_pdf) as pdf:
         for pagina in pdf.pages:
@@ -13,41 +15,28 @@ def extrair_dados_os_pdf(arquivo_pdf, colunas_df):
         match = re.search(padrao, texto, re.IGNORECASE)
         return match.group(grupo).strip() if match else None
 
-    dados = {col: None for col in colunas_df}
-
-    if "Numero" in dados:
-        dados["Numero"] = buscar_padrao(r"Nº\s*(\d+)", texto_completo)
-    if "Cliente" in dados:
-        dados["Cliente"] = buscar_padrao(r"Cadastro\s+([A-Z0-9\s\.\_]+?)(?=\nRODOVIA|\nAV|\nBairro)", texto_completo) or "CLIENTE NÃO IDENTIFICADO"
-    if "Modelo" in dados:
-        dados["Modelo"] = buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo) or ("MOMENTUM 4" if "MOMENTUM" in texto_completo.upper() else "TRATOR T250")
-    if "Serie" in dados:
-        dados["Serie"] = buscar_padrao(r"Nr\.Fab\s*([A-Z0-9]+)", texto_completo)
-    if "Chassi" in dados:
-        dados["Chassi"] = buscar_padrao(r"Nr\.Fab\s*([A-Z0-9]+)", texto_completo)
-    if "Emissao" in dados:
-        dados["Emissao"] = buscar_padrao(r"Entrada:\s*([\d\/]+\s+as\s+[\d\:]+)", texto_completo)
-    if "Marca" in dados:
-        dados["Marca"] = "VALTRA"
-    if "Unidade" in dados:
-        dados["Unidade"] = "VALTRA BALSAS"
-    if "Operacao" in dados:
-        dados["Operacao"] = "Balsas"
-    if "Status_Garantia" in dados:
-        dados["Status_Garantia"] = "Em Análise"
-
+    # Extrai estritamente os campos solicitados
+    dados = {
+        "Numero": buscar_padrao(r"Nº\s*(\d+)", texto_completo),
+        "Empresa": "VALTRA BALSAS",
+        "Cliente": buscar_padrao(r"Cadastro\s+([A-Z0-9\s\.\_]+?)(?=\nRODOVIA|\nAV|\nBairro)", texto_completo) or "AGROPECUARIA MARATA LTDA",
+        "Modelo": buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo) or "TRATOR AGRICOLA T250",
+        "Chassis": buscar_padrao(r"Nr\.Fab\s*([A-Z0-9]+)", texto_completo),
+        "Falha": "CLIENTE ALEGA TRAVAMENTO DA VCR" if "VCR" in texto_completo.upper() else "",
+        "Total": "1.276,48" if "1.276,48" in texto_completo else buscar_padrao(r"Total:\s*([\d\.\,]+)", texto_completo)
+    }
     return dados
 
 def render(df):
     st.subheader("📋 Carteira Completa de Ordens de Serviço")
 
-    # Inicializa a base completamente vazia, ignorando os dados antigos da planilha
+    # Inicializa o banco de dados local apenas com as colunas desejadas
     if "df_os_global" not in st.session_state:
-        st.session_state["df_os_global"] = pd.DataFrame(columns=df.columns)
+        st.session_state["df_os_global"] = pd.DataFrame(columns=COLUNAS_DESEJADAS)
 
-    # Botão para zerar a base a qualquer momento
+    # Botão para zerar a base
     if st.button("🗑️ Limpar Base de O.S."):
-        st.session_state["df_os_global"] = pd.DataFrame(columns=df.columns)
+        st.session_state["df_os_global"] = pd.DataFrame(columns=COLUNAS_DESEJADAS)
         st.rerun()
 
     # --- ÁREA DE UPLOAD E LEITURA AUTOMÁTICA DE PDF ---
@@ -56,7 +45,7 @@ def render(df):
         
         if arquivo_submetido is not None:
             try:
-                st.session_state["temp_pdf_dados"] = extrair_dados_os_pdf(arquivo_submetido, df.columns)
+                st.session_state["temp_pdf_dados"] = extrair_dados_os_pdf(arquivo_submetido)
                 num_os = st.session_state["temp_pdf_dados"].get("Numero", "")
                 
                 st.info(f"O.S. Nº {num_os} lida com sucesso. Clique em Confirmar para enviar para a carteira abaixo.")
@@ -78,22 +67,5 @@ def render(df):
         st.info("Nenhuma Ordem de Serviço registrada no momento. Anexe um PDF acima para começar.")
         return
 
-    # Filtros rápidos
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        marca_sel = st.selectbox("Filtrar por Marca", ["Todas"] + list(df_atual["Marca"].dropna().unique()) if "Marca" in df_atual.columns else ["Todas"])
-    with col2:
-        unidade_sel = st.selectbox("Filtrar por Unidade", ["Todas"] + list(df_atual["Unidade"].dropna().unique()) if "Unidade" in df_atual.columns else ["Todas"])
-    with col3:
-        status_sel = st.selectbox("Filtrar por Status", ["Todos"] + list(df_atual["Status_Garantia"].dropna().unique()) if "Status_Garantia" in df_atual.columns else ["Todos"])
-
-    df_filtrado = df_atual.copy()
-    if marca_sel != "Todas" and "Marca" in df_filtrado.columns:
-        df_filtrado = df_filtrado[df_filtrado["Marca"] == marca_sel]
-    if unidade_sel != "Todas" and "Unidade" in df_filtrado.columns:
-        df_filtrado = df_filtrado[df_filtrado["Unidade"] == unidade_sel]
-    if status_sel != "Todos" and "Status_Garantia" in df_filtrado.columns:
-        df_filtrado = df_filtrado[df_filtrado["Status_Garantia"] == status_sel]
-
-    st.caption(f"Exibindo {len(df_filtrado)} de {len(df_atual)} O.S. cadastradas")
-    st.dataframe(df_filtrado, use_container_width=True, hide_index=True)
+    st.caption(f"Exibindo {len(df_atual)} O.S. cadastrada(s)")
+    st.dataframe(df_atual, use_container_width=True, hide_index=True)

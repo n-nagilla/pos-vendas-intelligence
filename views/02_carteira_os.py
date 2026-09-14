@@ -41,16 +41,14 @@ def extrair_dados_os_pdf(arquivo_pdf, colunas_df):
 def render(df):
     st.subheader("📋 Carteira Completa de Ordens de Serviço")
 
-    # Inicia a base limpa (sem carregar os dados antigos da planilha anterior)
+    # Inicializa a base completamente vazia, ignorando os dados antigos da planilha
     if "df_os_global" not in st.session_state:
         st.session_state["df_os_global"] = pd.DataFrame(columns=df.columns)
 
-    # Botão para zerar/limpar a base a qualquer momento
-    col_reset, _ = st.columns()
-    with col_reset:
-        if st.button("🗑️ Limpar Base"):
-            st.session_state["df_os_global"] = pd.DataFrame(columns=df.columns)
-            st.rerun()
+    # Botão para zerar a base a qualquer momento
+    if st.button("🗑️ Limpar Base de O.S."):
+        st.session_state["df_os_global"] = pd.DataFrame(columns=df.columns)
+        st.rerun()
 
     # --- ÁREA DE UPLOAD E LEITURA AUTOMÁTICA DE PDF ---
     with st.expander("📥 Importar Nova O.S. via PDF", expanded=True):
@@ -58,7 +56,6 @@ def render(df):
         
         if arquivo_submetido is not None:
             try:
-                # Guarda temporariamente na memória da sessão sem renderizar tabelas poluidoras
                 st.session_state["temp_pdf_dados"] = extrair_dados_os_pdf(arquivo_submetido, df.columns)
                 num_os = st.session_state["temp_pdf_dados"].get("Numero", "")
                 

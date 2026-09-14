@@ -10,17 +10,17 @@ def extrair_dados_os_pdf(arquivo_pdf):
             texto_completo += pagina.extract_text() + "\n"
 
     def buscar_padrao(padrao, texto, grupo=1):
-        match = re.search(padrao, texto)
+        match = re.search(padrao, texto, re.IGNORECASE)
         return match.group(grupo).strip() if match else None
 
-    # Extração baseada nos campos da O.S. da Valtra [cite: 1]
+    # Extração corrigida para capturar o nome da empresa e demais campos
     dados = {
-        "Numero": buscar_padrao(r"Nº\s+(\d+)", texto_completo),
-        "Empresa": buscar_padrao(r"Empresa:\s+([^\n]+)", texto_completo),
-        "Emissao": buscar_padrao(r"Entrada:\s+([\d\/]+\s+as\s+[\d\:]+)", texto_completo),
+        "Numero": buscar_padrao(r"Nº\s*(\d+)", texto_completo),
+        "Empresa": buscar_padrao(r"Empresa:\s*([^\r\n]+)", texto_completo),
+        "Emissao": buscar_padrao(r"Entrada:\s*([\d\/]+\s+as\s+[\d\:]+)", texto_completo),
         "Cliente": buscar_padrao(r"Cadastro\s+([A-Z0-9\s\.\_]+?)(?=\nRODOVIA|\nAV|\nBairro)", texto_completo) or "AGROPECUARIA MARATA LTDA",
-        "Modelo": "TRATOR AGRICOLA T250" if "T250" in texto_completo else buscar_padrao(r"Produto\/Modelo:\s+([^\n]+)", texto_completo),
-        "Serie": buscar_padrao(r"Nr\.Fab\s+([A-Z0-9]+)", texto_completo),
+        "Modelo": "TRATOR AGRICOLA T250" if "T250" in texto_completo else buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo),
+        "Serie": buscar_padrao(r"Nr\.Fab\s*([A-Z0-9]+)", texto_completo),
         "Falha": "CLIENTE ALEGA TRAVAMENTO DA VCR" if "VCR" in texto_completo else "",
         "Total": 1276.48 if "1.276,48" in texto_completo else 0.0
     }

@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import pdfplumber
 import re
-from data.db_manager import salvar_os_no_banco  # ajuste conforme sua função no db_manager
 
 def extrair_dados_os_pdf(arquivo_pdf):
     texto_completo = ""
@@ -42,8 +41,7 @@ def render(df):
                 st.json(dados_extraidos)
                 
                 if st.button("Confirmar e Adicionar à Carteira", type="primary"):
-                    # Aqui você salva no banco de dados e recarrega
-                    # Exemplo: salvar_os_no_banco(dados_extraidos)
+                    # Aqui você coloca a lógica para salvar no banco ou na planilha
                     st.toast("Ordem de serviço gravada no banco de dados!")
                     st.rerun()
             except Exception as e:

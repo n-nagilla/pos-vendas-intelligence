@@ -116,6 +116,13 @@ def calcular_criticidade_e_prazos(df):
 # FLUXO EXCLUSIVO PARA A USUÁRIA: NAGILLA (Garantia Control - 11 Abas)
 # =========================================================================
 if usuario_atual == "nagilla":
+    # Esconde a barra de navegação nativa do Streamlit
+    st.markdown("""
+        <style>
+            [data-testid="stSidebarNav"] { display: none !important; }
+        </style>
+    """, unsafe_allow_html=True)
+
     st.title("🚜 Garantia Control | Mardisa Agro")
     st.caption("Central de Inteligência e Gestão de Garantias — Fendt & Valtra (Grupo Parvi)")
 
@@ -130,30 +137,38 @@ if usuario_atual == "nagilla":
     if not df.empty:
         df = calcular_criticidade_e_prazos(df)
 
-    # Menu lateral customizado
+    # Inicializa a aba ativa na sessão se não existir
+    if "menu_garantia_ativo" not in st.session_state:
+        st.session_state["menu_garantia_ativo"] = "🚦 1. Painel da Coordenadora"
+
+    lista_modulos = [
+        "🚦 1. Painel da Coordenadora",
+        "📋 2. Carteira de O.S.",
+        "⏱️ 3. Processos & Prazos",
+        "📦 4. Controle de Peças",
+        "💰 5. Controle Fábrica",
+        "📦 6. Devolução de Peças",
+        "🚜 7. Campanhas de Campo",
+        "📑 8. Entrega Técnica",
+        "🔴 9. Ações da Coordenadora",
+        "👥 10. Carteira da Consultora",
+        "⚠️ 11. Regra de Ouro"
+    ]
+
     with st.sidebar:
         st.markdown("---")
         st.markdown("### 📌 Módulos de Gestão")
-        menu_selecionado = st.radio(
-            "Navegação",
-            [
-                "🚦 1. Painel da Coordenadora",
-                "📋 2. Carteira de O.S.",
-                "⏱️ 3. Processos & Prazos",
-                "📦 4. Controle de Peças",
-                "💰 5. Controle Fábrica",
-                "📦 6. Devolução de Peças",
-                "🚜 7. Campanhas de Campo",
-                "📑 8. Entrega Técnica",
-                "🔴 9. Ações da Coordenadora",
-                "👥 10. Carteira da Consultora",
-                "⚠️ 11. Regra de Ouro"
-            ],
-            label_visibility="collapsed"
-        )
+        for modulo in lista_modulos:
+            # Destaca o botão se ele for a aba ativa
+            tipo_botao = "primary" if st.session_state["menu_garantia_ativo"] == modulo else "secondary"
+            if st.button(modulo, use_container_width=True, type=tipo_botao):
+                st.session_state["menu_garantia_ativo"] = modulo
+                st.rerun()
         st.markdown("---")
 
-    # Renderiza a tela escolhida no menu lateral
+    menu_selecionado = st.session_state["menu_garantia_ativo"]
+
+    # Renderiza a tela escolhida
     if menu_selecionado == "🚦 1. Painel da Coordenadora":
         v01_painel_coordenadora.render(df)
     elif menu_selecionado == "📋 2. Carteira de O.S.":

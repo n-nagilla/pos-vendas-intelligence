@@ -116,12 +116,6 @@ def calcular_criticidade_e_prazos(df):
 # FLUXO EXCLUSIVO PARA A USUÁRIA: NAGILLA (Garantia Control - 11 Abas)
 # =========================================================================
 if usuario_atual == "nagilla":
-    st.markdown("""
-        <style>
-            [data-testid="stSidebarNav"] { display: none !important; }
-        </style>
-    """, unsafe_allow_html=True)
-
     st.title("🚜 Garantia Control | Mardisa Agro")
     st.caption("Central de Inteligência e Gestão de Garantias — Fendt & Valtra (Grupo Parvi)")
 
@@ -136,43 +130,52 @@ if usuario_atual == "nagilla":
     if not df.empty:
         df = calcular_criticidade_e_prazos(df)
 
-    abas = st.tabs([
-        "🚦 1. Painel da Coordenadora",
-        "📋 2. Carteira de O.S.",
-        "⏱️ 3. Processos & Prazos",
-        "📦 4. Controle de Peças",
-        "💰 5. Controle Fábrica",
-        "📦 6. Devolução de Peças",
-        "🚜 7. Campanhas de Campo",
-        "📑 8. Entrega Técnica",
-        "🔴 9. Ações da Coordenadora",
-        "👥 10. Carteira da Consultora",
-        "⚠️ 11. Regra de Ouro"
-    ])
+    # Menu lateral customizado
+    with st.sidebar:
+        st.markdown("---")
+        st.markdown("### 📌 Módulos de Gestão")
+        menu_selecionado = st.radio(
+            "Navegação",
+            [
+                "🚦 1. Painel da Coordenadora",
+                "📋 2. Carteira de O.S.",
+                "⏱️ 3. Processos & Prazos",
+                "📦 4. Controle de Peças",
+                "💰 5. Controle Fábrica",
+                "📦 6. Devolução de Peças",
+                "🚜 7. Campanhas de Campo",
+                "📑 8. Entrega Técnica",
+                "🔴 9. Ações da Coordenadora",
+                "👥 10. Carteira da Consultora",
+                "⚠️ 11. Regra de Ouro"
+            ],
+            label_visibility="collapsed"
+        )
+        st.markdown("---")
 
-    with abas[0]:
+    # Renderiza a tela escolhida no menu lateral
+    if menu_selecionado == "🚦 1. Painel da Coordenadora":
         v01_painel_coordenadora.render(df)
-    with abas[1]:
+    elif menu_selecionado == "📋 2. Carteira de O.S.":
         v02_carteira_os.render(df)
-    with abas[2]:
+    elif menu_selecionado == "⏱️ 3. Processos & Prazos":
         v03_processos_prazos.render(df)
-    with abas[3]:
+    elif menu_selecionado == "📦 4. Controle de Peças":
         v04_controle_pecas.render(df)
-    with abas[4]:
+    elif menu_selecionado == "💰 5. Controle Fábrica":
         v05_controle_fabrica.render(df)
-    with abas[5]:
+    elif menu_selecionado == "📦 6. Devolução de Peças":
         v06_devolucao_pecas.render(df)
-    with abas[6]:
+    elif menu_selecionado == "🚜 7. Campanhas de Campo":
         v07_campanhas_campo.render(df)
-    with abas[7]:
+    elif menu_selecionado == "📑 8. Entrega Técnica":
         v08_entrega_tecnica.render(df)
-    with abas[8]:
+    elif menu_selecionado == "🔴 9. Ações da Coordenadora":
         v09_acoes_coordenadora.render(df)
-    with abas[9]:
+    elif menu_selecionado == "👥 10. Carteira da Consultora":
         v10_carteira_consultora.render(df)
-    with abas[10]:
+    elif menu_selecionado == "⚠️ 11. Regra de Ouro":
         v11_regra_ouro.render(df)
-
 # =========================================================================
 # FLUXO ORIGINAL PARA DEMAIS USUÁRIOS (Diretoria, Admin, Coordenação)
 # =========================================================================

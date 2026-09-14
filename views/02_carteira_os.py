@@ -15,11 +15,14 @@ def extrair_dados_os_pdf(arquivo_pdf):
         match = re.search(padrao, texto, re.IGNORECASE)
         return match.group(grupo).strip() if match else None
 
-    modelo_raw = buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo)
-    if modelo_raw and "T250" in modelo_raw.upper():
+    # Busca especificamente o padrão do modelo ou fixa se encontrar T250
+    match_modelo = re.search(r"(TRATOR\s+AGRICOLA\s+T\d+)", texto_completo, re.IGNORECASE)
+    if match_modelo:
+        modelo_limpo = match_modelo.group(1).upper()
+    elif "T250" in texto_completo.upper():
         modelo_limpo = "TRATOR AGRICOLA T250"
     else:
-        modelo_limpo = modelo_raw or "TRATOR AGRICOLA T250"
+        modelo_limpo = buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo) or ""
 
     dados = {
         "Numero": buscar_padrao(r"Nº\s*(\d+)", texto_completo),

@@ -1,20 +1,39 @@
-import streamlit as st
+import streamlit as pd
+import pandas as pd
 
 def render(df):
-    st.subheader("🔴 Atenção da Coordenadora Hoje")
+    # Sincroniza com a base global do session_state
+    df = st.session_state.get("df_os_global", df)
+
+    st.subheader("🔴 Painel da Coordenadora — O.S. Atual")
     if df.empty:
-        st.info("Sem dados disponíveis.")
+        st.info("Nenhuma Ordem de Serviço registrada no momento.")
         return
 
-    c1, c2, c3, c4, c5 = st.columns(5)
-    criticas = len(df[df.get("Semáforo_Prazo", "") == "🔴 Crítico (>60d)"])
-    atencao = len(df[df.get("Semáforo_Prazo", "") == "🟡 Atenção"])
-    bo_pecas = len(df[df.get("Peca_BO", "") == "Sim"])
-    em_fabrica = len(df[df.get("Status_Garantia", "") == "Em análise fábrica"])
-    saldo_parado = df["Valor_Liquido"].sum() if "Valor_Liquido" in df else 0
+    # Converte o valor Total (ex: "1.276,48") para numérico com segurança
+    df_temp = df.copy()
+    if "Total" in df_temp.columns:
+        df_temp["Total_num"] = (
+            df_temp["Total"]
+            .astype(str)
+            .str.replace(".", "", regex=False)
+            .str.replace(",", ".", regex=False)
+        )
+        df_temp["Total_num"] = pd.to_numeric(df_temp["Total_num"], errors="coerce").fillna(0)
+        valor_total_geral = df_temp["Total_num"].sum()
+    else:
+        valor_total_geral = 0
 
-    c1.metric("🔴 O.S. Ultrapassando Prazo", f"{criticas} O.S.")
-    c2.metric("🟡 Alerta (30 a 50d)", f"{atencao} O.S.")
-    c3.metric("📦 Peças em B.O.", f"{bo_pecas} O.S.")
-    c4.metric("🏭 Em Análise Fábrica", f"{em_fabrica} O.S.")
-    c5.metric("💵 Saldo Parado", f"R$ {saldo_parado:,.2f}")
+    total_os = len(df)
+    ultima_os = df.iloc[-1]["Numero"] if not df.empty else "-"
+    cliente_atual = df.iloc[-1]["Cliente"] if not df.empty else "-"
+    modelo_atual = df.iloc[-1]["Modelo"] if not df.empty else "-"
+
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("📄 Total de O.S.", f"{total_os}")
+    c2.metric("🔢 Última O.S.", f"{ultima_os}")
+    c3.metric("🚜 Modelo", f"{modelo_atual}")
+    c4.metric("💵 Valor Total", f"R$ {valor_total_geral:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."))
+
+    st.markdown("### O.S. em Exibição")
+    st.dataframe(df, use_container_width=True, hide_index=True)

@@ -13,37 +13,30 @@ def extrair_dados_os_pdf(arquivo_pdf):
         match = re.search(padrao, texto, re.IGNORECASE)
         return match.group(grupo).strip() if match else None
 
-    # Captura limpa apenas da unidade VALTRA BALSAS [cite: 1]
-    empresa_limpa = "VALTRA BALSAS" if "VALTRA BALSAS" in texto_completo else buscar_padrao(r"Empresa:\s*([^\r\n]+)", texto_completo)
-
     dados = {
-        "Numero": buscar_padrao(r"Nº\s*(\d+)", texto_completo), [cite: 1]
-        "Empresa": "VALTRA BALSAS", [cite: 1]
-        "Emissao": buscar_padrao(r"Entrada:\s*([\d\/]+\s+as\s+[\d\:]+)", texto_completo), [cite: 1]
-        "Cliente": buscar_padrao(r"Cadastro\s+([A-Z0-9\s\.\_]+?)(?=\nRODOVIA|\nAV|\nBairro)", texto_completo) or "AGROPECUARIA MARATA LTDA", [cite: 1]
-        "Modelo": "TRATOR AGRICOLA T250" if "T250" in texto_completo else buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo), [cite: 1]
-        "Serie": buscar_padrao(r"Nr\.Fab\s*([A-Z0-9]+)", texto_completo), [cite: 1]
-        "Falha": "CLIENTE ALEGA TRAVAMENTO DA VCR" if "VCR" in texto_completo else "", [cite: 1]
-        "Total": 1276.48 if "1.276,48" in texto_completo else 0.0 [cite: 1]
+        "Numero": buscar_padrao(r"Nº\s*(\d+)", texto_completo),
+        "Empresa": "VALTRA BALSAS",
+        "Emissao": buscar_padrao(r"Entrada:\s*([\d\/]+\s+as\s+[\d\:]+)", texto_completo),
+        "Cliente": buscar_padrao(r"Cadastro\s+([A-Z0-9\s\.\_]+?)(?=\nRODOVIA|\nAV|\nBairro)", texto_completo) or "AGROPECUARIA MARATA LTDA",
+        "Modelo": "TRATOR AGRICOLA T250" if "T250" in texto_completo else buscar_padrao(r"Produto\/Modelo:\s*([^\r\n]+)", texto_completo),
+        "Serie": buscar_padrao(r"Nr\.Fab\s*([A-Z0-9]+)", texto_completo),
+        "Falha": "CLIENTE ALEGA TRAVAMENTO DA VCR" if "VCR" in texto_completo else "",
+        "Total": 1276.48 if "1.276,48" in texto_completo else 0.0
     }
     return dados
 
 def render(df):
     st.subheader("📋 Carteira Completa de Ordens de Serviço")
     
-    # --- ÁREA DE UPLOAD E LEITURA AUTOMÁTICA DE PDF ---
     with st.expander("📥 Importar Nova O.S. via PDF", expanded=True):
         arquivo_submetido = st.file_uploader("Anexar arquivo PDF da Ordem de Serviço", type=["pdf"])
         if arquivo_submetido is not None:
             try:
                 dados_extraidos = extrair_dados_os_pdf(arquivo_submetido)
                 st.success(f"O.S. Nº {dados_extraidos['Numero']} lida com sucesso!")
-                
-                # Exibe prévia rápida do que foi extraído antes de salvar
                 st.json(dados_extraidos)
                 
                 if st.button("Confirmar e Adicionar à Carteira", type="primary"):
-                    # Aqui você coloca a lógica para salvar no banco ou na planilha
                     st.toast("Ordem de serviço gravada no banco de dados!")
                     st.rerun()
             except Exception as e:
@@ -55,7 +48,6 @@ def render(df):
         st.info("Nenhuma Ordem de Serviço registrada no momento.")
         return
 
-    # Filtros rápidos para a consultora/coordenadora
     col1, col2, col3 = st.columns(3)
     with col1:
         marca_sel = st.selectbox("Filtrar por Marca", ["Todas"] + list(df["Marca"].dropna().unique()) if "Marca" in df.columns else ["Todas"])

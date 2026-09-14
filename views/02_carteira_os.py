@@ -13,7 +13,6 @@ def extrair_dados_os_pdf(arquivo_pdf, colunas_df):
         match = re.search(padrao, texto, re.IGNORECASE)
         return match.group(grupo).strip() if match else None
 
-    # Cria um dicionário base com as colunas reais do seu DataFrame
     dados = {col: None for col in colunas_df}
 
     if "Numero" in dados:
@@ -41,47 +40,48 @@ def extrair_dados_os_pdf(arquivo_pdf, colunas_df):
 
 def render(df):
     st.subheader("📋 Carteira Completa de Ordens de Serviço")
-    
+
+    # Inicia a base limpa (sem carregar os dados antigos da planilha anterior)
+    if "df_os_global" not in st.session_state:
+        st.session_state["df_os_global"] = pd.DataFrame(columns=df.columns)
+
+    # Botão para zerar/limpar a base a qualquer momento
+    col_reset, _ = st.columns()
+    with col_reset:
+        if st.button("🗑️ Limpar Base"):
+            st.session_state["df_os_global"] = pd.DataFrame(columns=df.columns)
+            st.rerun()
+
     # --- ÁREA DE UPLOAD E LEITURA AUTOMÁTICA DE PDF ---
     with st.expander("📥 Importar Nova O.S. via PDF", expanded=True):
         arquivo_submetido = st.file_uploader("Anexar arquivo PDF da Ordem de Serviço", type=["pdf"], label_visibility="collapsed")
         
         if arquivo_submetido is not None:
             try:
-                dados_extraidos = extrair_dados_os_pdf(arquivo_submetido, df.columns)
-                st.success(f"O.S. Nº {dados_extraidos.get('Numero', '')} lida com sucesso!")
+                # Guarda temporariamente na memória da sessão sem renderizar tabelas poluidoras
+                st.session_state["temp_pdf_dados"] = extrair_dados_os_pdf(arquivo_submetido, df.columns)
+                num_os = st.session_state["temp_pdf_dados"].get("Numero", "")
                 
-                # Exibição limpa em formato de tabela compacta
-                df_previa = pd.DataFrame([dados_extraidos])
-                st.markdown("**Prévia dos Dados Extraídos:**")
-                st.dataframe(df_previa, use_container_width=True, hide_index=True)
+                st.info(f"O.S. Nº {num_os} lida com sucesso. Clique em Confirmar para enviar para a carteira abaixo.")
                 
-                col_btn1, col_btn2 = st.columns(2)
-                with col_btn1:
-                    if st.button("Confirmar e Adicionar à Carteira", type="primary", use_container_width=True):
-                        nova_linha_df = pd.DataFrame([dados_extraidos])
-                        
-                        # Atualiza o session_state global
-                        if "df_os_global" in st.session_state:
-                            st.session_state["df_os_global"] = pd.concat([st.session_state["df_os_global"], nova_linha_df], ignore_index=True)
-                        elif "df" in st.session_state:
-                            st.session_state["df"] = pd.concat([st.session_state["df"], nova_linha_df], ignore_index=True)
-                        
-                        st.toast("Ordem de serviço adicionada e sincronizada com as abas!")
-                        st.rerun()
+                if st.button("Confirmar e Adicionar à Carteira", type="primary"):
+                    nova_linha_df = pd.DataFrame([st.session_state["temp_pdf_dados"]])
+                    st.session_state["df_os_global"] = pd.concat([st.session_state["df_os_global"], nova_linha_df], ignore_index=True)
+                    del st.session_state["temp_pdf_dados"]
+                    st.toast("Ordem de serviço adicionada à carteira!")
+                    st.rerun()
             except Exception as e:
                 st.error(f"Erro ao processar o PDF: {e}")
 
     st.markdown("---")
 
-    # Usa o dataframe atualizado do session_state se existir, senão usa o df recebido
-    df_atual = st.session_state.get("df_os_global", st.session_state.get("df", df))
+    df_atual = st.session_state["df_os_global"]
 
     if df_atual.empty:
-        st.info("Nenhuma Ordem de Serviço registrada no momento.")
+        st.info("Nenhuma Ordem de Serviço registrada no momento. Anexe um PDF acima para começar.")
         return
 
-    # Filtros rápidos para a consultora/coordenadora
+    # Filtros rápidos
     col1, col2, col3 = st.columns(3)
     with col1:
         marca_sel = st.selectbox("Filtrar por Marca", ["Todas"] + list(df_atual["Marca"].dropna().unique()) if "Marca" in df_atual.columns else ["Todas"])
